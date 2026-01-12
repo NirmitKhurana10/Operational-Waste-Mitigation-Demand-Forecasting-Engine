@@ -113,24 +113,31 @@ This project leverages modern cloud infrastructure and Python's data processing 
 The system follows a three-stage pipeline architecture:
 
 ```mermaid
-graph LR
-    A[Excel Sales Report] -->|Daily Upload| B[Supabase Storage]
-    B -->|Download| C[Data Cleaning Script]
-    C -->|Transform| D[Clean CSV]
-    D -->|Upload| E[Supabase Storage]
-    D -->|Insert| F[food_sales Table]
-    F -->|Trigger| G[disposable_mapping]
-    G -->|Calculate| H[disposable_daily_usage View]
-    H -->|Log| I[disposable_usage_log]
-    I -->|Execute| J[Stock Update Procedure]
-    J -->|Update| K[disposable_stock]
-    K -->|Generate| L[Purchase Orders]
+graph TD
+    A["📊 Excel Sales Report<br/>(Daily Upload)"] --> B["☁️ Supabase Storage<br/>(daily-sales bucket)"]
+    B --> C["🔧 Data Cleaning Script<br/>(insert_food_sales.py)"]
+    C --> D["✨ Clean CSV<br/>(Transformed Data)"]
+    D --> E["☁️ Supabase Storage<br/>(clean-daily-sales bucket)"]
+    D --> F["📋 food_sales Table<br/>(Daily Records)"]
+    F --> G["🔗 disposable_mapping<br/>(Usage Ratios)"]
+    G --> H["📊 disposable_daily_usage<br/>(Materialized View)"]
+    H --> I["📝 disposable_usage_log<br/>(Historical Archive)"]
+    I --> J["⚙️ Stock Update Procedure<br/>(update_stock_after_sales)"]
+    J --> K["📦 disposable_stock<br/>(Current Inventory)"]
+    K --> L["🛒 Purchase Orders<br/>(Auto-generated)"]
     
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style F fill:#f3e5f5
-    style K fill:#e8f5e9
-    style L fill:#fce4ec
+    style A fill:#1e88e5,stroke:#0d47a1,stroke-width:3px,color:#fff
+    style B fill:#ffa726,stroke:#e65100,stroke-width:3px,color:#fff
+    style C fill:#26a69a,stroke:#00695c,stroke-width:3px,color:#fff
+    style D fill:#66bb6a,stroke:#2e7d32,stroke-width:3px,color:#fff
+    style E fill:#ffa726,stroke:#e65100,stroke-width:3px,color:#fff
+    style F fill:#ab47bc,stroke:#6a1b9a,stroke-width:3px,color:#fff
+    style G fill:#7e57c2,stroke:#4527a0,stroke-width:3px,color:#fff
+    style H fill:#42a5f5,stroke:#1565c0,stroke-width:3px,color:#fff
+    style I fill:#5c6bc0,stroke:#283593,stroke-width:3px,color:#fff
+    style J fill:#ec407a,stroke:#ad1457,stroke-width:3px,color:#fff
+    style K fill:#66bb6a,stroke:#2e7d32,stroke-width:3px,color:#fff
+    style L fill:#ef5350,stroke:#c62828,stroke-width:3px,color:#fff
 ```
 
 ### Data Flow
@@ -153,30 +160,17 @@ The database is hosted on **Supabase** (PostgreSQL) and consists of 9 core table
 
 ### Core Tables
 
-#### 📋 **food_items**
-Stores menu items with unique batch codes for sales tracking.
-
-#### 💰 **food_sales**
-Daily sales records linked to food items. Primary driver for disposable consumption.
-
-#### 🍽️ **disposables**
-Master catalog of all disposable items (plates, cups, utensils, etc.) with inventory thresholds.
-
-#### 🔗 **disposable_mapping**
-Junction table linking food items to required disposables with usage ratios.
-- Example: 1 "Meatball Platter" requires 1 plate + 1 fork + 1 knife
-
-#### 📊 **disposable_daily_usage** (Materialized View)
-Real-time calculation of today's disposable consumption.
-
-#### 📝 **disposable_usage_log**
-Historical archive of daily disposable usage for trend analysis.
-
-#### 📦 **disposable_stock**
-Current inventory levels with last restock date tracking.
-
-#### 🛒 **purchase_orders**
-Generated orders for disposables based on demand forecasts.
+| Table Name | Type | Description | Key Purpose |
+|------------|------|-------------|-------------|
+| 📋 **food_items** | Base Table | Menu items catalog with unique batch codes | Sales tracking and item identification |
+| 💰 **food_sales** | Transaction Table | Daily sales records linked to food items | Primary driver for disposable consumption analytics |
+| 🍽️ **disposables** | Master Table | Catalog of all disposable items (plates, cups, utensils, etc.) | Inventory management with min/max thresholds |
+| 🔗 **disposable_mapping** | Junction Table | Links food items to required disposables with usage ratios | Defines consumption patterns (e.g., 1 Meatball Platter = 1 plate + 1 fork + 1 knife) |
+| 📊 **disposable_daily_usage** | Materialized View | Real-time calculation of today's disposable consumption | Live tracking of current day usage |
+| 📝 **disposable_usage_log** | Archive Table | Historical daily disposable usage records | Trend analysis and forecasting |
+| 📦 **disposable_stock** | Inventory Table | Current stock levels with last restock dates | Real-time inventory monitoring |
+| 🛒 **purchase_orders** | Generated Table | Auto-generated orders for low-stock items | Demand forecasting and procurement automation |
+| 📤 **manual_stock_upload** | Input Table | Manual stock additions from external sources | Stock reconciliation and manual adjustments |
 
 ### Database Tables Overview
 
