@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX disposable_daily_usage_view_unique_idx
+ON disposable_daily_usage (disposable_id);
