@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX daily_order_disposable_view_unique_idx
+ON daily_order_disposable (disposable_id);
